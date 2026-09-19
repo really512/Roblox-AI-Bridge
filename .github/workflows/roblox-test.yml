@@ -42,8 +42,7 @@ jobs:
             -H "Accept: application/json" \
             "${LIST_URL}")
 
-          OPERATION_PATH=$(echo "$RESPONSE" | python3 -c \
-            'import json,sys; print(json.load(sys.stdin)["path"])')
+          OPERATION_PATH=$(echo "$RESPONSE" | python3 -c 'import json,sys; print(json.load(sys.stdin)["path"])')
 
           echo "Operation received."
 
@@ -55,8 +54,7 @@ jobs:
               -H "Accept: application/json" \
               "https://apis.roblox.com/cloud/v2/${OPERATION_PATH}")
 
-            DONE=$(echo "$OPERATION" | python3 -c \
-              'import json,sys; print(str(json.load(sys.stdin).get("done", False)).lower())')
+            DONE=$(echo "$OPERATION" | python3 -c 'import json,sys; print(str(json.load(sys.stdin).get("done", False)).lower())')
 
             if [ "$DONE" = "true" ]; then
               echo "Roblox operation completed."
@@ -66,30 +64,21 @@ jobs:
             echo "Still waiting... ($i/12)"
           done
 
-          python3 - "$OPERATION" <<'PY'
-import json
-import sys
-
-data = json.loads(sys.argv[1])
-
-if not data.get("done"):
-    print("Operation did not finish in time.")
-    raise SystemExit(1)
-
-response = data.get("response", {})
-instances = response.get("instances", [])
-
-print("")
-print("=== Roblox top-level instances ===")
-
-for item in instances:
-    engine = item.get("engineInstance", {})
-    name = engine.get("Name", "<unnamed>")
-    instance_id = engine.get("Id", "<no id>")
-    has_children = engine.get("hasChildren", item.get("hasChildren", False))
-
-    print(f"- {name} | ID: {instance_id} | Has children: {has_children}")
-
-print("")
-print(f"Total: {len(instances)}")
-PY
+          python3 -c '
+          import json, sys
+          data = json.loads(sys.argv[1])
+          if not data.get("done"):
+              print("Operation did not finish in time.")
+              raise SystemExit(1)
+          instances = data.get("response", {}).get("instances", [])
+          print("")
+          print("=== Roblox top-level instances ===")
+          for item in instances:
+              engine = item.get("engineInstance", {})
+              name = engine.get("Name", "<unnamed>")
+              instance_id = engine.get("Id", "<no id>")
+              has_children = engine.get("hasChildren", item.get("hasChildren", False))
+              print(f"- {name} | ID: {instance_id} | Has children: {has_children}")
+          print("")
+          print(f"Total: {len(instances)}")
+          ' "$OPERATION"
