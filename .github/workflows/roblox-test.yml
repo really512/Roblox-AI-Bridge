@@ -67,36 +67,29 @@ jobs:
           done
 
           python3 - "$OPERATION" <<'PY'
-          import json
-          import sys
+import json
+import sys
 
-          data = json.loads(sys.argv[1])
+data = json.loads(sys.argv[1])
 
-          if not data.get("done"):
-              print("Operation did not finish in time.")
-              raise SystemExit(1)
+if not data.get("done"):
+    print("Operation did not finish in time.")
+    raise SystemExit(1)
 
-          response = data.get("response", {})
-          instances = response.get("instances", [])
+response = data.get("response", {})
+instances = response.get("instances", [])
 
-          print("")
-          print("=== Roblox top-level instances ===")
+print("")
+print("=== Roblox top-level instances ===")
 
-          for item in instances:
-              engine = item.get("engineInstance", {})
-              name = engine.get("Name", "<unnamed>")
-              instance_id = engine.get("Id", "<no id>")
-              has_children = engine.get("hasChildren", item.get("hasChildren", False))
+for item in instances:
+    engine = item.get("engineInstance", {})
+    name = engine.get("Name", "<unnamed>")
+    instance_id = engine.get("Id", "<no id>")
+    has_children = engine.get("hasChildren", item.get("hasChildren", False))
 
-              print(f"- {name} | ID: {instance_id} | Has children: {has_children}")
+    print(f"- {name} | ID: {instance_id} | Has children: {has_children}")
 
-          print("")
-          print(f"Total: {len(instances)}")
-          PY          echo "Calling Roblox Open Cloud..."
-          RESPONSE=$(curl --fail-with-body -sS \
-            -H "x-api-key: ${ROBLOX_API_KEY}" \
-            -H "Accept: application/json" \
-            "${URL}")
-
-          echo "Roblox Open Cloud accepted the request."
-          echo "${RESPONSE}" | python3 -c 'import json,sys; d=json.load(sys.stdin); print("Operation path received:", d.get("path", "<missing>"))'
+print("")
+print(f"Total: {len(instances)}")
+PY
