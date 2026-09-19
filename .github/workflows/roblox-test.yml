@@ -1,0 +1,44 @@
+name: Test Roblox Open Cloud
+
+on:
+  workflow_dispatch:
+    inputs:
+      universe_id:
+        description: "Roblox Universe ID"
+        required: true
+        type: string
+      place_id:
+        description: "Roblox Start Place ID"
+        required: true
+        type: string
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Check Roblox Open Cloud
+        env:
+          ROBLOX_API_KEY: ${{ secrets.ROBLOX_API_KEY }}
+          UNIVERSE_ID: ${{ inputs.universe_id }}
+          PLACE_ID: ${{ inputs.place_id }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "${ROBLOX_API_KEY:-}" ]; then
+            echo "ROBLOX_API_KEY secret is missing."
+            exit 1
+          fi
+
+          URL="https://apis.roblox.com/cloud/v2/universes/${UNIVERSE_ID}/places/${PLACE_ID}/instances/root:listChildren"
+
+          echo "Calling Roblox Open Cloud..."
+          RESPONSE=$(curl --fail-with-body -sS \
+            -H "x-api-key: ${ROBLOX_API_KEY}" \
+            -H "Accept: application/json" \
+            "${URL}")
+
+          echo "Roblox Open Cloud accepted the request."
+          echo "${RESPONSE}" | python3 -c 'import json,sys; d=json.load(sys.stdin); print("Operation path received:", d.get("path", "<missing>"))'
